@@ -106,7 +106,8 @@ Full list of environment variables:
 | `HERMES_WEBUI_STATE_DIR` | `~/.hermes/webui-mvp` | Where sessions and state are stored |
 | `HERMES_WEBUI_DEFAULT_WORKSPACE` | `~/workspace` | Default workspace |
 | `HERMES_WEBUI_DEFAULT_MODEL` | `openai/gpt-5.4-mini` | Default model |
-| `HERMES_HOME` | `~/.hermes` | Base directory for Hermes state (affects all paths above) |
+| `HERMES_WEBUI_PASSWORD` | *(unset)* | Set to enable password authentication |
+| `HERMES_HOME` | `~/.hermes` | Base directory for Hermes state (affects all paths) |
 | `HERMES_CONFIG_PATH` | `~/.hermes/config.yaml` | Path to Hermes config file |
 
 ---
@@ -158,17 +159,18 @@ Tests discover the repo and the Hermes agent dynamically -- no hardcoded paths.
 
 ```bash
 cd hermes-webui
-python -m pytest tests/ -v
+pytest tests/ -v --timeout=60
 ```
 
 Or using the agent venv explicitly:
 
 ```bash
-/path/to/hermes-agent/venv/bin/python -m pytest tests/ -v   # or any Python with deps installed
+/path/to/hermes-agent/venv/bin/python -m pytest tests/ -v
 ```
 
 Tests run against an isolated server on port 8788 with a separate state directory.
-Production data and real cron jobs are never touched.
+Production data and real cron jobs are never touched. Current count: **415 tests**
+across 21 test files.
 
 ---
 
@@ -176,22 +178,27 @@ Production data and real cron jobs are never touched.
 
 ### Chat and agent
 - Streaming responses via SSE (tokens appear as they are generated)
-- Multi-provider model support -- any Hermes API provider (OpenAI, Anthropic, Google, DeepSeek, Nous Portal, OpenRouter); dynamic model dropdown populated from configured keys
+- Multi-provider model support -- any Hermes API provider (OpenAI, Anthropic, Google, DeepSeek, Nous Portal, OpenRouter, MiniMax, Z.AI); dynamic model dropdown populated from configured keys
 - Send a message while one is processing -- it queues automatically
 - Edit any past user message inline and regenerate from that point
 - Retry the last assistant response with one click
 - Cancel a running task from the activity bar
-- Tool call cards inline -- each shows the tool name, args, and result snippet
+- Tool call cards inline -- each shows the tool name, args, and result snippet; expand/collapse all toggle for multi-tool turns
 - Mermaid diagram rendering inline (flowcharts, sequence diagrams, gantt charts)
+- Thinking/reasoning display -- collapsible gold-themed cards for Claude extended thinking and o3 reasoning blocks
 - Approval card for dangerous shell commands (allow once / session / always / deny)
 - SSE auto-reconnect on network blips (SSH tunnel resilience)
 - File attachments persist across page reloads
 - Message timestamps (HH:MM next to each message, full date on hover)
+- Code block copy button with "Copied!" feedback
+- Syntax highlighting via Prism.js (Python, JS, bash, JSON, SQL, and more)
+- Safe HTML rendering in AI responses (bold, italic, code converted to markdown)
 
 ### Sessions
 - Create, rename, duplicate, delete, search by title and message content
-- Pin/star sessions to the top of the sidebar
+- Pin/star sessions to the top of the sidebar (gold indicator)
 - Archive sessions (hide without deleting, toggle to show)
+- Session projects -- named groups with colors for organizing sessions
 - Session tags -- add #tag to titles for colored chips and click-to-filter
 - Grouped by Today / Yesterday / Earlier in the sidebar
 - Download as Markdown transcript, full JSON export, or import from JSON
@@ -199,56 +206,105 @@ Production data and real cron jobs are never touched.
 - Browser tab title reflects the active session name
 
 ### Workspace file browser
-- Browse directory tree with type icons
+- Directory tree with expand/collapse (single-click toggles, double-click navigates)
+- Breadcrumb navigation with clickable path segments
 - Preview text, code, Markdown (rendered), and images inline
 - Edit, create, delete, and rename files; create folders
+- Binary file download (auto-detected from server)
+- File preview auto-closes on directory navigation (with unsaved-edit guard)
 - Right panel is drag-resizable
 - Syntax highlighted code preview (Prism.js)
 
+### Voice input
+- Microphone button in the composer (Web Speech API)
+- Tap to record, tap again or send to stop
+- Live interim transcription appears in the textarea
+- Auto-stops after ~2s of silence
+- Appends to existing textarea content (doesn't replace)
+- Hidden when browser doesn't support Web Speech API (Chrome, Edge, Safari)
+
+### Profiles
+- Profile picker in the topbar -- purple chip with dropdown showing all profiles
+- Gateway status dots (green = running), model info, skill count per profile
+- Profiles management panel -- create, switch, and delete profiles from the sidebar
+- Clone config from active profile on create
+- Seamless switching -- no server restart; reloads config, skills, memory, cron, models
+- Per-session profile tracking (records which profile was active at creation)
+
+### Authentication and security
+- Optional password auth -- off by default, zero friction for localhost
+- Enable via `HERMES_WEBUI_PASSWORD` env var or Settings panel
+- Signed HMAC HTTP-only cookie with 24h TTL
+- Minimal dark-themed login page at `/login`
+- Security headers on all responses (X-Content-Type-Options, X-Frame-Options, Referrer-Policy)
+- 20MB POST body size limit
+- CDN resources pinned with SRI integrity hashes
+
 ### Settings and configuration
-- Settings panel (gear icon in topbar) -- persist default model and default workspace server-side
+- Settings panel (gear icon) -- default model, default workspace, send key preference
+- Send key: Enter (default) or Ctrl/Cmd+Enter
 - Cron completion alerts -- toast notifications and unread badge on Tasks tab
 - Background agent error alerts -- banner when a non-active session encounters an error
 
+### Slash commands
+- Type `/` in the composer for autocomplete dropdown
+- Built-in: `/help`, `/clear`, `/model <name>`, `/workspace <name>`, `/new`
+- Arrow keys navigate, Tab/Enter select, Escape closes
+- Unrecognized commands pass through to the agent
+
 ### Panels
-- **Chat** -- session list, search, pin, archive, new conversation
-- **Tasks** -- view, create, edit, run, pause/resume, delete cron jobs; completion alerts
+- **Chat** -- session list, search, pin, archive, projects, new conversation
+- **Tasks** -- view, create, edit, run, pause/resume, delete cron jobs; run history; completion alerts
 - **Skills** -- list all skills by category, search, preview, create/edit/delete
 - **Memory** -- view and edit MEMORY.md and USER.md inline
+- **Profiles** -- create, switch, delete agent profiles; clone config
 - **Todos** -- live task list from the current session
 - **Spaces** -- add, rename, remove workspaces; quick-switch from topbar
+
+### Mobile responsive
+- Hamburger sidebar -- slide-in overlay on mobile (<640px)
+- Bottom navigation bar -- 5-tab iOS-style fixed bar
+- Files slide-over panel from right edge
+- Touch targets minimum 44px on all interactive elements
+- Composer positioned above bottom nav
+- Desktop layout completely unchanged
 
 ---
 
 ## Architecture
 
 ```
-server.py               HTTP routing shell (~76 lines)
+server.py               HTTP routing shell + auth middleware (~81 lines)
 api/
-  routes.py             All GET + POST route handlers
-  config.py             Discovery + globals + model provider detection
-  helpers.py            HTTP helpers: j(), bad(), require(), safe_resolve()
-  models.py             Session model + CRUD
-  workspace.py          File ops: list_dir, read_file_content, workspace helpers
-  upload.py             Multipart parser, file upload handler
-  streaming.py          SSE engine, run_agent integration, cancel support
+  auth.py               Optional password authentication, signed cookies (~149 lines)
+  config.py             Discovery, globals, model detection, reloadable config (~701 lines)
+  helpers.py            HTTP helpers, security headers (~71 lines)
+  models.py             Session model + CRUD (~137 lines)
+  profiles.py           Profile state management, hermes_cli wrapper (~246 lines)
+  routes.py             All GET + POST route handlers (~1180 lines)
+  streaming.py          SSE engine, run_agent, cancel support (~236 lines)
+  upload.py             Multipart parser, file upload handler (~78 lines)
+  workspace.py          File ops, workspace helpers (~77 lines)
 static/
-  index.html            HTML template
-  style.css             All CSS
-  ui.js                 DOM helpers, renderMd, Mermaid, tool cards, file tree
-  workspace.js          File tree, preview, file ops
-  sessions.js           Session CRUD, list rendering, search, tags, archive
-  messages.js           send(), SSE event handlers, approval, transcript
-  panels.js             Cron, skills, memory, workspace, todo, switchPanel, alerts
-  boot.js               Event wiring + boot IIFE
+  index.html            HTML template (~364 lines)
+  style.css             All CSS incl. mobile responsive (~670 lines)
+  ui.js                 DOM helpers, renderMd, tool cards, file tree (~977 lines)
+  workspace.js          File preview, file ops (~185 lines)
+  sessions.js           Session CRUD, list rendering, search (~533 lines)
+  messages.js           send(), SSE handlers, approval, transcript (~297 lines)
+  panels.js             Cron, skills, memory, profiles, settings (~974 lines)
+  commands.js           Slash command autocomplete (~156 lines)
+  boot.js               Mobile nav, voice input, boot IIFE (~338 lines)
 tests/
-  conftest.py           Isolated test server (port 8788, separate HERMES_HOME)
-  test_sprint1-14.py    Feature tests per sprint
-  test_regressions.py   Permanent regression gate
+  conftest.py           Isolated test server (port 8788)
+  test_sprint{1-20b}.py 21 test files, 415 test functions
+  test_regressions.py   Permanent regression gate (23 tests)
+Dockerfile              python:3.12-slim container image
+docker-compose.yml      Compose with named volume and optional auth
 ```
 
 State lives outside the repo at `~/.hermes/webui-mvp/` by default
-(sessions, workspaces, settings, last_workspace). Override with `HERMES_WEBUI_STATE_DIR`.
+(sessions, workspaces, settings, projects, last_workspace). Override with `HERMES_WEBUI_STATE_DIR`.
 
 ---
 
@@ -257,7 +313,8 @@ State lives outside the repo at `~/.hermes/webui-mvp/` by default
 - `ROADMAP.md` -- feature roadmap and sprint history
 - `ARCHITECTURE.md` -- system design, all API endpoints, implementation notes
 - `TESTING.md` -- manual browser test plan and automated coverage reference
-- `CHANGELOG.md` -- release notes
+- `CHANGELOG.md` -- release notes per sprint
+- `SPRINTS.md` -- forward sprint plan with CLI + Claude parity targets
 
 ## Repo
 

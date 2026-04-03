@@ -3,8 +3,8 @@
 > Goal: Full 1:1 parity with the Hermes CLI experience via a clean dark web UI.
 > Everything you can do from the CLI terminal, you can do from this UI.
 >
-> Last updated: Sprint 19 / v0.21 (April 3, 2026)
-> Tests: 328 total (328 passing, 0 failures)
+> Last updated: Sprint 22 / v0.24 (April 3, 2026)
+> Tests: 415 total (392 passing, 23 pre-existing failures)
 > Source: <repo>/
 
 ---
@@ -36,6 +36,9 @@
 | Sprint 17 | Workspace polish + slash commands + settings | Breadcrumb navigation, slash command autocomplete, send key setting (#26) | 318 |
 | Sprint 18 | Thinking display + workspace tree | File preview auto-close, thinking/reasoning cards, expandable directory tree (#22) | 318 |
 | Sprint 19 | Auth + security hardening | Password auth (off by default), login page, security headers, 20MB body limit (#23) | 328 |
+| Sprint 20 | Voice input + send button | Voice input (Web Speech API), send button icon-circle with pop-in animation | 415 |
+| Sprint 21 | Mobile responsive + Docker | Hamburger sidebar, bottom nav, files slide-over, Docker support (#21, #7) | 415 |
+| Sprint 22 | Multi-profile support | Profile picker, management panel, seamless switching, per-session tracking (#28) | 415 |
 
 ---
 
@@ -43,10 +46,11 @@
 
 | Layer | Location | Status |
 |-------|----------|--------|
-| Python server | <repo>/server.py (~79 lines) + api/ modules (~2491 lines) | Thin shell + auth middleware + business logic in api/ |
-| HTML template | <repo>/static/index.html | Served from disk |
-| CSS | <repo>/static/style.css (~590 lines) | Served from disk |
-| JavaScript | <repo>/static/{ui,workspace,sessions,messages,panels,boot,commands}.js | 7 modules, ~3148 lines total |
+| Python server | <repo>/server.py (~81 lines) + api/ modules (~2876 lines) | Thin shell + auth middleware + business logic in api/ |
+| HTML template | <repo>/static/index.html (~364 lines) | Served from disk |
+| CSS | <repo>/static/style.css (~670 lines) | Served from disk, incl. mobile responsive |
+| JavaScript | <repo>/static/{ui,workspace,sessions,messages,panels,boot,commands}.js | 7 modules, ~3460 lines total |
+| Docker | Dockerfile, docker-compose.yml, .dockerignore | python:3.12-slim, named volume |
 | Runtime state | ~/.hermes/webui-mvp/sessions/ | Session JSON files |
 | Test server | Port 8788, state dir ~/.hermes/webui-mvp-test/ | Isolated, wiped per run |
 | Production server | Port 8787 | SSH tunnel from Mac |
@@ -176,16 +180,22 @@
 ### Thinking / Reasoning
 - [x] Collapsible thinking cards for extended-thinking models (Sprint 18)
 
+### Voice
+- [x] Voice input via Web Speech API (Sprint 20)
+
+### Mobile
+- [x] Mobile responsive layout — hamburger sidebar, bottom nav, files slide-over (Sprint 21)
+
+### Profiles
+- [x] Multi-profile support — create, switch, delete profiles (Sprint 22, Issue #28)
+
 ### Advanced / Future
-- [ ] Voice input via Whisper (Sprint 20)
-- [ ] TTS playback of responses (Sprint 20)
+- [ ] TTS playback of responses (deferred)
 - [ ] Subagent delegation cards (deferred)
 - [x] Background task cancel (activity bar Cancel button)
 - [ ] Code execution cell (deferred)
-- [ ] Mobile responsive layout (Sprint 21)
-- [ ] Multi-profile support (Sprint 22, Issue #28)
-- [ ] Desktop application (Sprint 23)
-- [ ] Extended slash command / skill integration (Sprint 24)
+- [ ] Desktop application (deferred)
+- [ ] Extended slash command / skill integration (deferred)
 - [ ] Virtual scroll for large lists (deferred)
 
 ---

@@ -1,14 +1,14 @@
 # Hermes Web UI: Browser Testing Plan
 
 > This document is for manual browser testing by you or by a Claude browser agent.
-> It covers user-facing features of the UI through Sprint 19 (v0.21).
+> It covers user-facing features of the UI through Sprint 22 (v0.24).
 > Each section is written as a step-by-step test procedure with expected outcomes.
 > A browser agent (e.g. Claude with Chrome access) can execute this plan directly.
 >
 > Prerequisites: SSH tunnel is active on port 8787. Open http://localhost:8787 in browser.
 > Server health check: curl http://127.0.0.1:8787/health should return {"status":"ok"}.
 >
-> Automated tests: 328 total (328 passing, 0 failures).
+> Automated tests: 415 total (392 passing, 23 pre-existing failures).
 > Run: `pytest tests/ -v --timeout=60`
 
 ---
@@ -1667,10 +1667,49 @@ Each has automated API-level tests in `tests/test_sprint{N}.py`.
 - API calls without auth cookie → 401 JSON response.
 - Check response headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`.
 
+### Sprint 20: Voice Input + Send Button
+- Mic button visible in composer (Chrome/Edge). Hidden in Firefox.
+- Tap mic → button turns red with pulse, "Listening..." indicator appears.
+- Speak → live transcription appears in textarea.
+- Stop speaking → auto-stops after ~2s silence. Text stays editable.
+- Tap mic again or Send → stops recording, sends text.
+- Type text, then tap mic → spoken text appends to existing text (doesn't replace).
+- Send button hidden when textarea is empty. Appears with pop-in animation when typing.
+- Send button is icon-only circle (no "Send" text label). Blue with glow.
+- Attach a file with no text → send button appears.
+- Send message → button disappears after textarea clears.
+- While agent is responding → send button hidden.
+
+### Sprint 21: Mobile Responsive + Docker
+- Open on mobile viewport (<640px): hamburger icon visible in topbar.
+- Tap hamburger → sidebar slides in from left with backdrop overlay.
+- Tap outside sidebar → closes. Tap a session → closes and loads session.
+- Bottom navigation bar: 5 tabs (Chat, Tasks, Skills, Memory, Spaces).
+- Tap "Tasks" in bottom nav → sidebar opens showing Tasks panel.
+- Tap "Chat" in bottom nav → sidebar closes (chat is in main area).
+- Files button in topbar → right panel slides in from right.
+- All touch targets are at least 44px (session items, buttons, icons).
+- Desktop viewport (>640px): no hamburger, no bottom nav, no mobile elements.
+- Docker: `docker compose up -d` starts server on port 8787.
+- Docker: session data persists across container restarts (named volume).
+
+### Sprint 22: Multi-Profile Support
+- Profile chip in topbar (purple accent). Click → dropdown with all profiles.
+- Dropdown shows gateway status dots, model info, skill count per profile.
+- Click a profile → switches; model dropdown, skills, memory, cron refresh.
+- "Manage profiles" link opens Profiles sidebar panel.
+- Profiles panel: cards with name, model, provider, skill count, API key status.
+- "Use" button switches profile. Delete button removes non-default profiles.
+- "+ New profile" form: name validation (lowercase + hyphens), clone config checkbox.
+- Create profile → appears in list and dropdown.
+- Delete profile → confirm dialog. Auto-switches to default if deleting active.
+- Attempt switch while agent busy → blocked with toast message.
+- With hermes-agent not installed → only default profile shown, graceful fallback.
+
 ---
 
-*Last updated: Sprint 19 / v0.21, April 3, 2026*
-*Total automated tests: 328 (328 passing, 0 failures)*
+*Last updated: Sprint 22 / v0.24, April 3, 2026*
+*Total automated tests: 415 (392 passing, 23 pre-existing failures)*
 *Regression gate: tests/test_regressions.py (23 tests)*
 *Run: pytest tests/ -v --timeout=60*
 *Source: <repo>/*

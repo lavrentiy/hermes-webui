@@ -26,32 +26,36 @@ This makes the code easy to modify from a terminal or by an agent.
 ## 2. File Inventory
 
     <repo>/
-    server.py              Thin routing shell + HTTP Handler + auth middleware. ~79 lines.
+    server.py              Thin routing shell + HTTP Handler + auth middleware. ~81 lines.
                            Delegates all route handling to api/routes.py.
     start.sh               Discovery script: finds agent dir, Python, starts server.
+    Dockerfile             python:3.12-slim container image (~23 lines)
+    docker-compose.yml     Compose config with named volume and optional auth (~22 lines)
+    .dockerignore          Excludes .git, tests/, .env* from Docker builds
     api/
       __init__.py          Package marker
       auth.py              Optional password authentication, signed cookies (~149 lines)
-      routes.py            All GET + POST route handlers (~1109 lines)
-      config.py            Shared configuration, constants, global state, model discovery (~654 lines)
+      config.py            Discovery, globals, model detection, reloadable config (~701 lines)
       helpers.py           HTTP helpers: j(), bad(), require(), safe_resolve(), security headers (~71 lines)
-      models.py            Session model + CRUD (~132 lines)
+      models.py            Session model + CRUD, per-session profile tracking (~137 lines)
+      profiles.py          Profile state management, hermes_cli wrapper (~246 lines)
+      routes.py            All GET + POST route handlers (~1180 lines)
+      streaming.py         SSE engine, run_agent, cancel, HERMES_HOME save/restore (~236 lines)
+      upload.py            Multipart parser, file upload handler (~78 lines)
       workspace.py         File ops: list_dir, read_file_content, workspace helpers (~77 lines)
-      upload.py            Multipart parser, file upload handler (~77 lines)
-      streaming.py         SSE engine, run_agent integration, cancel support (~222 lines)
     static/
-      index.html           HTML template (served from disk)
-      style.css            All CSS (~590 lines)
-      ui.js                DOM helpers, renderMd, tool cards, model dropdown, file tree (~957 lines)
+      index.html           HTML template (~364 lines)
+      style.css            All CSS incl. mobile responsive (~670 lines)
+      ui.js                DOM helpers, renderMd, tool cards, model dropdown, file tree (~977 lines)
       workspace.js         File preview, file ops, loadDir, clearPreview (~185 lines)
-      sessions.js          Session CRUD, list rendering, search, SVG icons, overlay actions (~532 lines)
+      sessions.js          Session CRUD, list rendering, search, SVG icons, overlay actions (~533 lines)
       messages.js          send(), SSE event handlers, approval, transcript (~297 lines)
-      panels.js            Cron, skills, memory, workspace, todo, switchPanel, settings (~813 lines)
+      panels.js            Cron, skills, memory, workspace, profiles, todo, settings (~974 lines)
       commands.js          Slash command registry, parser, autocomplete dropdown (~156 lines)
-      boot.js              Event wiring, keydown handlers, boot IIFE (~208 lines)
+      boot.js              Event wiring, mobile nav, voice input, boot IIFE (~338 lines)
     tests/
       conftest.py          Isolated test server (port 8788, separate HERMES_HOME) (~240 lines)
-      test_sprint{1-19}.py Feature tests per sprint (17 files, 327 test functions)
+      test_sprint{1-20b}.py Feature tests per sprint (21 files, 415 test functions)
       test_regressions.py  Permanent regression gate (23 tests)
     AGENTS.md              Instruction file for agents working in this directory.
     ROADMAP.md             Feature and product roadmap document.
@@ -95,6 +99,7 @@ Environment variables controlling behavior:
     HERMES_CONFIG_PATH             Path to ~/.hermes/config.yaml
     HERMES_WEBUI_DEFAULT_MODEL     Default LLM model string
     HERMES_WEBUI_PASSWORD          Optional: enable password auth (off by default)
+    HERMES_HOME                    Base directory for Hermes state (~/.hermes by default)
 
 Test isolation environment variables (set by conftest.py):
 
@@ -113,6 +118,8 @@ Per-request environment variables (set by chat handler, restored after):
     HERMES_EXEC_ASK      Set to "1" to enable approval gate for dangerous commands.
     HERMES_SESSION_KEY   Set to session_id. The approval tool keys pending entries
                          by this value, enabling per-session approval state.
+    HERMES_HOME          Set to the active profile's directory before running agent.
+                         Saved and restored around each agent run.
 
 WARNING: These env vars are process-global. Two concurrent chat requests will clobber
 each other. This is safe only for single-user, single-concurrent-request use.
