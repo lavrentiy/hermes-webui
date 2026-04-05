@@ -427,9 +427,12 @@
     /* Hide sidebar bottom section on mobile (model select, workspace) */
     .sidebar-bottom{display:none;}
     /* Topbar adjustments */
-    .topbar{padding:8px 12px;gap:8px;}
+    .topbar{padding:8px 12px;gap:8px;height:54px;}
     .topbar-title{font-size:14px;}
     .topbar-meta{display:none;}
+    .topbar-stats{display:none;}
+    /* Sidebar header: smaller on mobile */
+    .sidebar-header{height:64px;padding:10px 12px 0;}
     .topbar-chips{flex-wrap:nowrap;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
     .topbar-chips .chip,.topbar-chips .ws-chip,.topbar-chips button{font-size:11px!important;padding:3px 8px!important;white-space:nowrap;}
     /* Messages area — account for bottom nav */
