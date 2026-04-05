@@ -441,7 +441,7 @@ function syncTopbar(){
   }
   const statsEl=$('topbarStats');
   if(statsEl){
-    if(inTok||outTok||ws){
+    if(inTok||outTok||wsPath){
       statsEl.textContent=`${_fmtTokens(inTok)} in · ${_fmtTokens(outTok)} out${costStr}${wsShort?' · '+wsShort:''}`;
       statsEl.style.display='';
     } else {
@@ -471,15 +471,15 @@ function syncTopbar(){
   if(clearBtn) clearBtn.style.display=(S.messages&&S.messages.filter(msg=>msg.role!=='tool').length>0)?'':'none';
   const displayModel=$('modelSelect').value||m;
   $('modelChip').textContent=getModelLabel(displayModel);
-  const ws=S.session.workspace||'';
+  const wsCurrent=S.session.workspace||'';
   // Update sidebar workspace display
   const sidebarName=$('sidebarWsName');
   const sidebarPath=$('sidebarWsPath');
   if(sidebarName){
-    sidebarName.textContent=getWorkspaceFriendlyName(ws);
+    sidebarName.textContent=getWorkspaceFriendlyName(wsCurrent);
   }
   if(sidebarPath){
-    sidebarPath.textContent=ws;
+    sidebarPath.textContent=wsCurrent;
   }
   // modelSelect already set above
   // Update profile chip label
