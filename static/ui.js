@@ -414,7 +414,40 @@ function syncTopbar(){
   $('topbarTitle').textContent=sessionTitle;
   document.title=sessionTitle+' \u2014 Hermes';
   const vis=S.messages.filter(m=>m&&m.role&&m.role!=='tool');
-  $('topbarMeta').textContent=`${vis.length} messages`;
+  // Format session start date
+  const createdAt=S.session.created_at;
+  const dateStr=createdAt?new Date(createdAt*1000).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'';
+  $('topbarMeta').textContent=`${vis.length} messages${dateStr?' · started '+dateStr:''}`;
+  // Stats row: tokens + cost + workspace
+  const inTok=S.session.input_tokens||0;
+  const outTok=S.session.output_tokens||0;
+  const wsPath=S.session.workspace||'';
+  const wsShort=wsPath.replace(/^\/home\/[^/]+/,'~');
+  // Estimate cost: use session value or compute from tokens (Claude Sonnet ~$3/$15 per M)
+  let costStr='';
+  if(S.session.estimated_cost){
+    const c=S.session.estimated_cost;
+    costStr=` · ~$${c<0.01?c.toFixed(4):c.toFixed(2)}`;
+  } else if(inTok||outTok){
+    const model=(S.session.model||'').toLowerCase();
+    let inRate=3,outRate=15; // sonnet default $/M
+    if(model.includes('haiku'))       {inRate=0.8;outRate=4;}
+    else if(model.includes('opus'))   {inRate=15;outRate=75;}
+    else if(model.includes('gpt-4o')) {inRate=2.5;outRate=10;}
+    else if(model.includes('gpt-4'))  {inRate=30;outRate=60;}
+    else if(model.includes('mini'))   {inRate=0.15;outRate=0.6;}
+    const cost=(inTok/1e6)*inRate+(outTok/1e6)*outRate;
+    if(cost>0) costStr=` · ~$${cost<0.01?cost.toFixed(4):cost.toFixed(2)}`;
+  }
+  const statsEl=$('topbarStats');
+  if(statsEl){
+    if(inTok||outTok||ws){
+      statsEl.textContent=`${_fmtTokens(inTok)} in · ${_fmtTokens(outTok)} out${costStr}${wsShort?' · '+wsShort:''}`;
+      statsEl.style.display='';
+    } else {
+      statsEl.style.display='none';
+    }
+  }
   // If a profile switch just happened, apply its model rather than the session's stale value.
   // S._pendingProfileModel is set by switchToProfile() and cleared here after one application.
   const modelOverride=S._pendingProfileModel;

@@ -431,6 +431,7 @@ async function deleteSession(sid){
     }else{
       $('topbarTitle').textContent='Hermes';
       $('topbarMeta').textContent='Start a new conversation';
+      const _ts=$('topbarStats');if(_ts)_ts.style.display='none';
       $('msgInner').innerHTML='';
       $('emptyState').style.display='';
       $('fileTree').innerHTML='';
