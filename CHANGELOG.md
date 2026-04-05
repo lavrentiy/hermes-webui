@@ -5,6 +5,34 @@
 
 ---
 
+## [v0.32] Auto-Compaction Handling + /compact Command (Issue #90)
+*April 5, 2026 | 424 tests*
+
+### Features
+- **Auto-compaction detection.** When the agent's `run_conversation()` triggers
+  context compression and rotates the session ID, the WebUI detects the mismatch
+  and renames the session file + cache entry so messages don't split across files.
+- **`compressed` SSE event.** Frontend receives a notification when compression
+  fires, shows a system message ("Context was auto-compressed") and a toast.
+- **`/compact` slash command.** Type `/compact` to request the agent compress
+  the conversation context. Sends a natural-language message that triggers the
+  agent's compression preflight.
+- **Real context window data.** The context usage indicator now uses actual
+  `context_length`, `threshold_tokens`, and `last_prompt_tokens` from the agent's
+  compressor instead of the client-side model name lookup. Tooltip shows the
+  auto-compress threshold. Hides gracefully when the agent has no compressor.
+
+### Architecture
+- `api/streaming.py`: Session ID mismatch detection after `run_conversation()`,
+  file rename, SESSIONS cache update under lock, `compressed` SSE event,
+  `context_length`/`threshold_tokens`/`last_prompt_tokens` in usage dict.
+- `static/commands.js`: `/compact` command.
+- `static/messages.js`: `compressed` SSE event handler.
+- `static/ui.js`: `_syncCtxIndicator()` rewritten to use server-side compressor
+  data instead of client-side model estimates.
+
+---
+
 ## [v0.31.2] CLI session delete fix
 *April 5, 2026 | 424 tests*
 
@@ -1113,4 +1141,4 @@ Three-panel layout: sessions sidebar, chat area, workspace panel.
 
 ---
 
-*Last updated: v0.31, April 4, 2026 | Tests: 424*
+*Last updated: v0.32, April 5, 2026 | Tests: 424*
