@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="/static/favicon.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hermes</title>
+<title>deploymedaddy</title>
 <script>(function(){var t=localStorage.getItem('hermes-theme');if(t&&t!=='dark')document.documentElement.dataset.theme=t;})()</script>
 <link rel="stylesheet" href="/static/style.css">
   <!-- Prism.js syntax highlighting (loaded async, non-blocking) -->
@@ -15,9 +16,10 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-header">
-      <pre class="ascii-logo">┓┏┏┓┳┓┳┳┓┏┓┏┓
-┣┫┣ ┣┫┃┃┃┣ ┗┓
-┛┗┗┛┛┗┛ ┗┗┛┗┛</pre>
+      <pre class="ascii-logo"> ┓    ┓          ┓   ┓ ┓  
+┏┫┏┓┏┓┃┏┓┓┏┏┳┓┏┓┏┫┏┓┏┫┏┫┓┏
+┗┻┗ ┣┛┗┗┛┗┫┛┗┗┗ ┗┻┗┻┗┻┗┻┗┫
+    ┛     ┛              ┛</pre>
       <div class="sidebar-nav">
         <button class="nav-tab active" data-panel="chat" data-label="Chat" onclick="switchPanel('chat')" title="Chat">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -195,7 +197,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div style="flex:1;min-width:0;overflow:hidden">
-        <div class="topbar-title" id="topbarTitle">Hermes</div>
+        <div class="topbar-title" id="topbarTitle">deploymedaddy</div>
         <div class="topbar-meta" id="topbarMeta">Start a new conversation</div>
         <div class="topbar-stats" id="topbarStats"></div>
       </div>
@@ -287,7 +289,7 @@
         </div>
         <div class="attach-tray" id="attachTray"></div>
         <div class="mic-status" id="micStatus" style="display:none"><span class="mic-dot"></span> Listening…</div>
-        <textarea id="msg" rows="1" placeholder="Message Hermes…"></textarea>
+        <textarea id="msg" rows="1" placeholder="Message deploymedaddy…"></textarea>
         <div class="composer-footer">
           <div class="composer-left">
             <input type="file" id="fileInput" multiple accept="image/*,text/*,application/pdf,application/json,.md,.py,.js,.ts,.yaml,.yml,.toml,.csv,.sh,.txt,.log,.env" style="display:none">
@@ -387,7 +389,7 @@
           <input type="checkbox" id="settingsShowCliSessions" style="width:15px;height:15px;accent-color:var(--accent)">
           Show CLI sessions in sidebar
         </label>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Merges sessions from the Hermes CLI (state.db) into the session list. Click a CLI session to import it and continue the conversation.</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Merges sessions from the deploymedaddy CLI (state.db) into the session list. Click a CLI session to import it and continue the conversation.</div>
       </div>
       <div class="settings-field">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">

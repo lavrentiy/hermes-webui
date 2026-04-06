@@ -429,7 +429,7 @@ async function deleteSession(sid){
     if(remaining.sessions&&remaining.sessions.length){
       await loadSession(remaining.sessions[0].session_id);
     }else{
-      $('topbarTitle').textContent='Hermes';
+      $('topbarTitle').textContent='deploymedaddy';
       $('topbarMeta').textContent='Start a new conversation';
       const _ts=$('topbarStats');if(_ts)_ts.style.display='none';
       $('msgInner').innerHTML='';

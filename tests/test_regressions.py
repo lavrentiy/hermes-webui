@@ -159,12 +159,18 @@ def test_server_py_sse_loop_breaks_on_cancel(cleanup_test_sessions):
     """R5b: SSE loop must include 'cancel' in the break condition.
     When missing, the connection hung after the cancel event was processed.
     Sprint 11: logic moved from server.py to api/routes.py -- check both.
+    Sprint 27: logic moved to api/handlers/ -- check handler modules too.
     """
     import re
-    # Check server.py first, then api/routes.py (Sprint 11 extracted routes)
+    # Check server.py, api/routes.py, and api/handlers/ (Sprint 27 handler split)
     src = (REPO_ROOT / "server.py").read_text()
     routes_src = (REPO_ROOT / "api" / "routes.py").read_text() if (REPO_ROOT / "api" / "routes.py").exists() else ""
-    combined = src + routes_src
+    handlers_src = ""
+    handlers_dir = REPO_ROOT / "api" / "handlers"
+    if handlers_dir.exists():
+        for py in handlers_dir.glob("*.py"):
+            handlers_src += py.read_text()
+    combined = src + routes_src + handlers_src
     m = re.search(r"if event in \([^)]+\):\s*break", combined)
     assert m, "SSE break condition not found in server.py or api/routes.py"
     assert "cancel" in m.group(), \
@@ -281,12 +287,23 @@ def test_server_delete_invalidates_index(cleanup_test_sessions):
     """R8b: session/delete handler must unlink _index.json.
     Static check that the fix is in place.
     Sprint 11: handler moved from server.py to api/routes.py -- check both.
+    Sprint 27: handler moved to api/handlers/sessions.py -- check handler modules too.
     """
     src = (REPO_ROOT / "server.py").read_text()
     routes_src = (REPO_ROOT / "api" / "routes.py").read_text() if (REPO_ROOT / "api" / "routes.py").exists() else ""
-    # Find the delete handler in either file
-    for label, text in [("server.py", src), ("api/routes.py", routes_src)]:
+    # Also collect handler module sources (Sprint 27 handler split)
+    handler_files = []
+    handlers_dir = REPO_ROOT / "api" / "handlers"
+    if handlers_dir.exists():
+        for py in handlers_dir.glob("*.py"):
+            handler_files.append((f"api/handlers/{py.name}", py.read_text()))
+    # Find the delete handler in any file
+    all_files = [("server.py", src), ("api/routes.py", routes_src)] + handler_files
+    for label, text in all_files:
+        # Check for either old-style if-chain or function-based handler
         delete_idx = text.find("if parsed.path == '/api/session/delete':")
+        if delete_idx < 0:
+            delete_idx = text.find("def post_session_delete(")
         if delete_idx >= 0:
             delete_block = text[delete_idx:delete_idx+600]
             assert "SESSION_INDEX_FILE" in delete_block, \
