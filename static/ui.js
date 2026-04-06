@@ -451,25 +451,25 @@ function syncTopbar(){
   // If a profile switch just happened, apply its model rather than the session's stale value.
   // S._pendingProfileModel is set by switchToProfile() and cleared here after one application.
   const modelOverride=S._pendingProfileModel;
+  const sessionModel=S.session.model||'';
   if(modelOverride){
     S._pendingProfileModel=null;
     _applyModelToDropdown(modelOverride,$('modelSelect'));
   } else {
-    const m=S.session.model||'';
-    const applied=_applyModelToDropdown(m,$('modelSelect'));
+    const applied=_applyModelToDropdown(sessionModel,$('modelSelect'));
     // If the model isn't in the list at all, add it so the session value is preserved
-    if(!applied && m){
+    if(!applied && sessionModel){
       const opt=document.createElement('option');
-      opt.value=m;
-      opt.textContent=getModelLabel(m);
+      opt.value=sessionModel;
+      opt.textContent=getModelLabel(sessionModel);
       $('modelSelect').appendChild(opt);
-      $('modelSelect').value=m;
+      $('modelSelect').value=sessionModel;
     }
   }
   // Show Clear button only when session has messages
   const clearBtn=$('btnClearConv');
   if(clearBtn) clearBtn.style.display=(S.messages&&S.messages.filter(msg=>msg.role!=='tool').length>0)?'':'none';
-  const displayModel=$('modelSelect').value||m;
+  const displayModel=$('modelSelect').value||sessionModel;
   $('modelChip').textContent=getModelLabel(displayModel);
   const wsCurrent=S.session.workspace||'';
   // Update sidebar workspace display

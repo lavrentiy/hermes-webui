@@ -219,7 +219,7 @@
   .memory-section{margin-bottom:16px;}
   .memory-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
   .memory-mtime{font-size:10px;font-weight:400;text-transform:none;opacity:.6;}
-  .memory-content{font-size:12px;line-height:1.7;color:var(--text);}
+  .memory-content{font-size:12px;line-height:1.7;color:var(--text);word-break:break-word;overflow-wrap:anywhere;}
   .memory-content p{margin-bottom:6px;}
   .memory-empty{color:var(--muted);font-size:12px;font-style:italic;}
   .sidebar-bottom{border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0;position:relative;z-index:10;overflow:visible;}
