@@ -166,16 +166,29 @@ def all_sessions():
 
 
 def title_from(messages, fallback: str='Untitled'):
-    """Derive a session title from the first user message."""
+    """Derive a session title from the first user message.
+
+    Only generates a title when the current title looks auto-generated
+    (i.e. it's 'Untitled' or matches the first 64 chars of the first user
+    message).  If the user manually renamed the session, fallback will be
+    their custom name and it won't match — so we leave it untouched.
+    """
+    first_user_text = ''
     for m in messages:
         if m.get('role') == 'user':
             c = m.get('content', '')
             if isinstance(c, list):
                 c = ' '.join(p.get('text', '') for p in c if isinstance(p, dict) and p.get('type') == 'text')
-            text = str(c).strip()
-            if text:
-                return text[:64]
-    return fallback
+            first_user_text = str(c).strip()
+            if first_user_text:
+                break
+
+    # If the existing title looks hand-crafted, keep it.
+    auto_title = first_user_text[:64] if first_user_text else ''
+    if fallback not in ('Untitled', '') and fallback != auto_title:
+        return fallback  # user renamed it — don't clobber
+
+    return auto_title or fallback
 
 
 # ── Project helpers ──────────────────────────────────────────────────────────
