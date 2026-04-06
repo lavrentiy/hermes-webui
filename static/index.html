@@ -403,6 +403,13 @@
         </label>
         <div style="font-size:11px;color:var(--muted);margin-top:4px">Show a banner when newer versions of the WebUI or Agent are available. Runs a background git fetch periodically.</div>
       </div>
+      <div class="settings-field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="settingsLlmTitles" style="width:15px;height:15px;accent-color:var(--accent)">
+          AI-generated session titles
+        </label>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">After each response, generate a short descriptive title using a cheap model (Haiku / GPT-Mini). Uses a tiny extra API call per new session.</div>
+      </div>
       <div class="settings-field" style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px">
         <label for="settingsPassword">Access Password</label>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Enter a new password to set or change it. Leave blank to keep current setting.</div>

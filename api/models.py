@@ -191,6 +191,161 @@ def title_from(messages, fallback: str='Untitled'):
     return auto_title or fallback
 
 
+# ── LLM-generated session titles ────────────────────────────────────────────
+
+def _is_auto_title(title: str, messages: list) -> bool:
+    """Return True if title looks auto-generated (safe to replace with LLM title)."""
+    if not title or title == 'Untitled':
+        return True
+    # Check if it matches the first-message truncation
+    auto = title_from(messages, '')
+    return title == auto
+
+
+def generate_title_llm(session, put_fn=None) -> str | None:
+    """Generate a short session title via a cheap LLM call.
+
+    Uses the active provider/model from config.  Falls back silently if
+    the API call fails.  Returns the new title string, or None on failure.
+
+    put_fn: optional callable(event, data) to push a 'title' SSE event
+    back to the client immediately (for streaming sessions).
+    """
+    try:
+        import json as _json
+        import urllib.request as _req
+        import urllib.error as _uerr
+        from api.config import resolve_model_provider, load_settings
+
+        # Honour the opt-in setting
+        if not load_settings().get('llm_titles', False):
+            return None
+
+        # Extract first user message text
+        first_user = ''
+        for m in (session.messages or []):
+            if m.get('role') == 'user':
+                c = m.get('content', '')
+                if isinstance(c, list):
+                    c = ' '.join(p.get('text', '') for p in c
+                                  if isinstance(p, dict) and p.get('type') == 'text')
+                first_user = str(c).strip()
+                if first_user:
+                    break
+        if not first_user:
+            return None
+
+        # Resolve model + provider
+        model_id = session.model or ''
+        model, provider, base_url = resolve_model_provider(model_id)
+
+        api_key = None
+        try:
+            from hermes_cli.runtime_provider import resolve_runtime_provider
+            rt = resolve_runtime_provider()
+            api_key = rt.get('api_key')
+            if not provider:
+                provider = rt.get('provider')
+            if not base_url:
+                base_url = rt.get('base_url')
+        except Exception:
+            pass
+
+        if not api_key:
+            return None
+
+        # Build a minimal chat-completion request
+        prompt = (
+            "Generate a short, descriptive title (4-6 words max) for a conversation "
+            "that starts with this message. Reply with ONLY the title, no quotes, "
+            "no punctuation at the end.\n\nMessage: " + first_user[:400]
+        )
+
+        # Pick smallest/cheapest model variant if available
+        title_model = model
+        if provider == 'anthropic':
+            title_model = 'claude-haiku-3-5'
+            base_url = base_url or 'https://api.anthropic.com'
+        elif provider == 'openai':
+            title_model = 'gpt-4.1-mini'
+            base_url = base_url or 'https://api.openai.com'
+        elif provider == 'openrouter':
+            title_model = 'anthropic/claude-haiku-3-5'
+            base_url = base_url or 'https://openrouter.ai/api'
+
+        # Normalise base_url
+        base_url = (base_url or '').rstrip('/')
+
+        payload = {
+            'model': title_model,
+            'max_tokens': 20,
+            'messages': [{'role': 'user', 'content': prompt}],
+        }
+
+        if provider == 'anthropic':
+            endpoint = base_url + '/v1/messages'
+            headers = {
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+            }
+            data = _json.dumps(payload).encode()
+            request = _req.Request(endpoint, data=data, headers=headers, method='POST')
+            with _req.urlopen(request, timeout=10) as resp:
+                body = _json.loads(resp.read())
+            title_text = (body.get('content') or [{}])[0].get('text', '').strip()
+        else:
+            # OpenAI-compatible (openai, openrouter, ollama, etc.)
+            endpoint = base_url + '/v1/chat/completions'
+            headers = {
+                'authorization': f'Bearer {api_key}',
+                'content-type': 'application/json',
+            }
+            data = _json.dumps(payload).encode()
+            request = _req.Request(endpoint, data=data, headers=headers, method='POST')
+            with _req.urlopen(request, timeout=10) as resp:
+                body = _json.loads(resp.read())
+            title_text = (
+                (body.get('choices') or [{}])[0]
+                .get('message', {})
+                .get('content', '')
+                .strip()
+            )
+
+        if not title_text:
+            return None
+
+        # Trim quotes/punctuation the model sometimes adds
+        title_text = title_text.strip('"\'').rstrip('.').strip()
+        title_text = title_text[:80]
+
+        # Persist and optionally push to client
+        session.title = title_text
+        session.save()
+        if put_fn:
+            try:
+                put_fn('title', {'title': title_text, 'session_id': session.session_id})
+            except Exception:
+                pass
+        return title_text
+
+    except Exception as _e:
+        print(f'[webui] generate_title_llm failed (non-fatal): {_e}', flush=True)
+        return None
+
+
+def generate_title_async(session, put_fn=None) -> None:
+    """Fire-and-forget wrapper — runs generate_title_llm in a daemon thread."""
+    import threading
+    t = threading.Thread(
+        target=generate_title_llm,
+        args=(session, put_fn),
+        daemon=True,
+        name=f'title-gen-{session.session_id[:8]}',
+    )
+    t.start()
+
+
 # ── Project helpers ──────────────────────────────────────────────────────────
 
 def load_projects() -> list:

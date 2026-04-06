@@ -22,6 +22,7 @@ from api.config import (
 from api.helpers import require, bad, safe_resolve, j, t, read_body, _security_headers
 from api.models import (
     Session, get_session, new_session, all_sessions, title_from,
+    _is_auto_title, generate_title_async,
     _write_session_index, SESSION_INDEX_FILE,
     load_projects, save_projects, import_cli_session,
     get_cli_sessions, get_cli_session_messages,
@@ -1019,7 +1020,10 @@ def _handle_chat_sync(handler, body):
         if old_session_key is None: os.environ.pop('HERMES_SESSION_KEY', None)
         else: os.environ['HERMES_SESSION_KEY'] = old_session_key
     s.messages = result.get('messages') or s.messages
+    _sync_title_is_auto = _is_auto_title(s.title, s.messages)
     s.title = title_from(s.messages, s.title); s.save()
+    if _sync_title_is_auto:
+        generate_title_async(s)
     # Sync to state.db for /insights (opt-in setting)
     try:
         if load_settings().get('sync_to_insights'):

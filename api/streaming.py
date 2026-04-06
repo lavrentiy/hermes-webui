@@ -28,7 +28,7 @@ try:
     from run_agent import AIAgent
 except ImportError:
     AIAgent = None
-from api.models import get_session, title_from
+from api.models import get_session, title_from, _is_auto_title, generate_title_async
 from api.workspace import set_last_workspace
 
 # Fields that are safe to send to LLM provider APIs.
@@ -253,6 +253,7 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                 if isinstance(_m, dict) and not _m.get('timestamp') and not _m.get('_ts'):
                     _m['timestamp'] = int(_now)
             s.title = title_from(s.messages, s.title)
+            _title_is_auto = _is_auto_title(s.title, s.messages)
             # Read token/cost usage from the agent object (if available)
             input_tokens = getattr(agent, 'session_prompt_tokens', 0) or 0
             output_tokens = getattr(agent, 'session_completion_tokens', 0) or 0
@@ -315,6 +316,9 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                             m['attachments'] = attachments
                             break
             s.save()
+            # Fire LLM title generation if title is still auto-generated
+            if _title_is_auto:
+                generate_title_async(s, put_fn=put)
             # Sync to state.db for /insights (opt-in setting)
             try:
                 from api.config import load_settings as _load_settings
