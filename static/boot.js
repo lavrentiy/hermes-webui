@@ -1,11 +1,23 @@
 async function cancelStream(){
   const streamId = S.activeStreamId;
   if(!streamId) return;
+  const btn=$('btnCancel');
+  // Prevent double-clicks — show "Stopping…" state and disable
+  if(btn){
+    if(btn.dataset.stopping) return;
+    btn.dataset.stopping='1';
+    btn.innerHTML='&#9632; Stopping\u2026';
+    btn.style.opacity='.6';
+    btn.style.pointerEvents='none';
+  }
   try{
     await fetch(new URL(`/api/chat/cancel?stream_id=${encodeURIComponent(streamId)}`,location.origin).href,{credentials:'include'});
-    const btn=$('btnCancel');if(btn)btn.style.display='none';
-    setStatus('Cancelling…');
-  }catch(e){setStatus('Cancel failed: '+e.message);}
+    setStatus('Stopping agent\u2026');
+  }catch(e){
+    setStatus('Cancel failed: '+e.message);
+    // Re-enable button on failure
+    if(btn){delete btn.dataset.stopping;btn.innerHTML='&#9632; Cancel';btn.style.opacity='';btn.style.pointerEvents='';}
+  }
 }
 
 // ── Mobile navigation ──────────────────────────────────────────────────────

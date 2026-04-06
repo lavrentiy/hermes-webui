@@ -81,9 +81,19 @@ def post_cron_update(handler, parsed):
     body = read_body(handler)
     try: require(body, 'job_id')
     except ValueError as e: return bad(handler, str(e))
-    from cron.jobs import update_job
+    from cron.jobs import update_job, parse_schedule
     updates = {k: v for k, v in body.items() if k != 'job_id' and v is not None}
-    job = update_job(body['job_id'], updates)
+    # The frontend sends schedule as a raw string, but update_job expects the
+    # parsed dict format (matching how create_job stores it).  Parse it here.
+    if 'schedule' in updates and isinstance(updates['schedule'], str):
+        try:
+            updates['schedule'] = parse_schedule(updates['schedule'])
+        except Exception as e:
+            return bad(handler, f'Invalid schedule: {e}')
+    try:
+        job = update_job(body['job_id'], updates)
+    except Exception as e:
+        return bad(handler, f'Update failed: {e}')
     if not job: return bad(handler, 'Job not found', 404)
     return j(handler, {'ok': True, 'job': job})
 

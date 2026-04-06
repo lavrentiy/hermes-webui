@@ -5,6 +5,20 @@
 
 ---
 
+## [v0.37] Hard-Stop Cancel + Topbar Stats Rework
+*April 6, 2026 | 440 tests*
+
+### Features
+- **Hard-stop cancel.** Clicking Cancel now actually kills the running agent, not just mutes SSE output. `ACTIVE_AGENTS` registry in `config.py` stores live agent refs per stream. `cancel_stream()` calls `agent.interrupt()` so the agent loop exits between tool calls. Orphaned threads no longer burn tokens after cancel.
+- **Partial save on cancel.** When a stream is cancelled mid-run, messages accumulated so far are saved to the session with a `[Cancelled by user]` marker appended. Token usage is captured from the agent and added to session totals. The cancel SSE event carries the partial session so the frontend can update immediately.
+- **Topbar stats move to right side.** `#topbarStats` (token counts, cost, workspace path) moved from the left flex div to a new `.topbar-right` column container, right-aligned below the chip buttons. Topbar is now ~70px tall instead of 99px.
+- **Cancel UX improvements.** Cancel button shows "Stopping…" state with spinner on click, disabled to prevent double-clicks. Frontend handles the enriched cancel SSE event and renders a `[Cancelled]` indicator on the last message.
+
+### Bug Fixes
+- Cron handler: minor robustness fixes in `api/handlers/crons.py`.
+
+---
+
 ## [v0.36.2] OpenRouter model routing fix
 *April 5, 2026 | 440 tests*
 

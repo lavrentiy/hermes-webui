@@ -54,7 +54,8 @@ async function populateModelDropdown(){
       for(const m of g.models){
         const opt=document.createElement('option');
         opt.value=m.id;
-        opt.textContent=m.label;
+        opt.textContent=m.tags ? `${m.label}  —  ${m.tags}` : m.label;
+        opt.dataset.label=m.label;
         og.appendChild(opt);
         _dynamicModelLabels[m.id]=m.label;
       }
@@ -292,11 +293,30 @@ function updateQueueBadge(){
 }
 function showToast(msg,ms){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms||2800);}
 
+// Clipboard helper — works on non-HTTPS origins (Tailscale IP, LAN, etc.)
+function _copyText(text){
+  if(navigator.clipboard&&window.isSecureContext){
+    return navigator.clipboard.writeText(text);
+  }
+  // Fallback: hidden textarea + execCommand for insecure contexts
+  return new Promise((resolve,reject)=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();ta.select();
+    try{
+      document.execCommand('copy')?resolve():reject(new Error('execCommand failed'));
+    }catch(e){reject(e);}
+    finally{ta.remove();}
+  });
+}
+
 function copyMsg(btn){
   const row=btn.closest('.msg-row');
   const text=row?row.dataset.rawText:'';
   if(!text)return;
-  navigator.clipboard.writeText(text).then(()=>{
+  _copyText(text).then(()=>{
     const orig=btn.innerHTML;btn.innerHTML='&#10003;';btn.style.color='var(--blue)';
     setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},1500);
   }).catch(()=>showToast('Copy failed'));
@@ -808,10 +828,10 @@ function addCopyButtons(container){
     btn.textContent='Copy';
     btn.onclick=(e)=>{
       e.stopPropagation();
-      navigator.clipboard.writeText(codeEl.textContent).then(()=>{
+      _copyText(codeEl.textContent).then(()=>{
         btn.textContent='Copied!';
         setTimeout(()=>{btn.textContent='Copy';},1500);
-      });
+      }).catch(()=>{btn.textContent='Failed';setTimeout(()=>{btn.textContent='Copy';},1500);});
     };
     const header=pre.previousElementSibling;
     if(header&&header.classList.contains('pre-header')){

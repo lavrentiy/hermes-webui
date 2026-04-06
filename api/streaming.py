@@ -11,7 +11,7 @@ import traceback
 from pathlib import Path
 
 from api.config import (
-    STREAMS, STREAMS_LOCK, CANCEL_FLAGS, CLI_TOOLSETS,
+    STREAMS, STREAMS_LOCK, CANCEL_FLAGS, ACTIVE_AGENTS, CLI_TOOLSETS,
     LOCK, SESSIONS, SESSION_DIR,
     _get_session_agent_lock, _set_thread_env, _clear_thread_env,
     resolve_model_provider,
@@ -191,6 +191,9 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                 stream_delta_callback=on_token,
                 tool_progress_callback=on_tool,
             )
+            # Register agent so cancel_stream() can call agent.interrupt()
+            with STREAMS_LOCK:
+                ACTIVE_AGENTS[stream_id] = agent
             # Prepend workspace context so the agent always knows which directory
             # to use for file operations, regardless of session age or AGENTS.md defaults.
             workspace_ctx = f"[Workspace: {s.workspace}]\n"
@@ -212,7 +215,46 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                 task_id=session_id,
                 persist_user_message=msg_text,
             )
+            _was_cancelled = cancel_event.is_set()
             s.messages = result.get('messages') or s.messages
+
+            # ── Handle cancellation: save partial results ──
+            if _was_cancelled:
+                # Append a cancellation marker so the conversation log is clear
+                s.messages.append({
+                    'role': 'assistant',
+                    'content': '*[Cancelled by user]*',
+                    'timestamp': int(time.time()),
+                })
+                _now = time.time()
+                for _m in s.messages:
+                    if isinstance(_m, dict) and not _m.get('timestamp') and not _m.get('_ts'):
+                        _m['timestamp'] = int(_now)
+                s.title = title_from(s.messages, s.title)
+                # Capture partial usage
+                input_tokens = getattr(agent, 'session_prompt_tokens', 0) or 0
+                output_tokens = getattr(agent, 'session_completion_tokens', 0) or 0
+                estimated_cost = getattr(agent, 'session_estimated_cost_usd', None)
+                s.input_tokens = (s.input_tokens or 0) + input_tokens
+                s.output_tokens = (s.output_tokens or 0) + output_tokens
+                if estimated_cost:
+                    s.estimated_cost = (s.estimated_cost or 0) + estimated_cost
+                s.save()
+                # Send cancel event WITH partial session data so frontend can update
+                # (bypass the normal put() filter by writing to queue directly)
+                try:
+                    q.put_nowait(('cancel', {
+                        'message': 'Cancelled by user',
+                        'session': s.compact() | {'messages': s.messages},
+                        'usage': {
+                            'input_tokens': input_tokens,
+                            'output_tokens': output_tokens,
+                            'estimated_cost': estimated_cost,
+                        },
+                    }))
+                except Exception:
+                    pass
+                return  # Skip normal post-run logic
 
             # ── Handle context compression side effects ──
             # If compression fired inside run_conversation, the agent may have
@@ -371,6 +413,7 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
         with STREAMS_LOCK:
             STREAMS.pop(stream_id, None)
             CANCEL_FLAGS.pop(stream_id, None)
+            ACTIVE_AGENTS.pop(stream_id, None)
 
 # ============================================================
 # SECTION: HTTP Request Handler
@@ -381,13 +424,30 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
 
 
 def cancel_stream(stream_id: str) -> bool:
-    """Signal an in-flight stream to cancel. Returns True if the stream existed."""
+    """Signal an in-flight stream to cancel and interrupt the running agent.
+
+    This does three things:
+      1. Sets the cancel flag so the put() helper stops emitting SSE events
+      2. Calls agent.interrupt() to break the AIAgent's tool-calling loop
+      3. Pushes a cancel sentinel to the SSE queue so the HTTP handler unblocks
+
+    The agent thread will finish its current API call / tool execution, then
+    break out of the loop.  The post-run code detects cancellation and saves
+    partial results before emitting the cancel event with session data.
+    """
     with STREAMS_LOCK:
         if stream_id not in STREAMS:
             return False
         flag = CANCEL_FLAGS.get(stream_id)
         if flag:
             flag.set()
+        # Interrupt the agent's tool-calling loop so it stops ASAP
+        agent = ACTIVE_AGENTS.get(stream_id)
+        if agent:
+            try:
+                agent.interrupt()
+            except Exception:
+                pass
         # Put a cancel sentinel into the queue so the SSE handler wakes up
         q = STREAMS.get(stream_id)
         if q:

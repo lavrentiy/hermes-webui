@@ -290,16 +290,16 @@ CLI_TOOLSETS = get_config().get('platform_toolsets', {}).get('cli', _DEFAULT_TOO
 
 # Hardcoded fallback models (used when no config.yaml or agent is available)
 _FALLBACK_MODELS = [
-    {'provider': 'OpenAI',    'id': 'openai/gpt-5.4-mini',              'label': 'GPT-5.4 Mini'},
-    {'provider': 'OpenAI',    'id': 'openai/gpt-4o',                    'label': 'GPT-4o'},
-    {'provider': 'OpenAI',    'id': 'openai/o3',                        'label': 'o3'},
-    {'provider': 'OpenAI',    'id': 'openai/o4-mini',                   'label': 'o4-mini'},
-    {'provider': 'Anthropic', 'id': 'anthropic/claude-sonnet-4.6',      'label': 'Claude Sonnet 4.6'},
-    {'provider': 'Anthropic', 'id': 'anthropic/claude-sonnet-4-5',      'label': 'Claude Sonnet 4.5'},
-    {'provider': 'Anthropic', 'id': 'anthropic/claude-haiku-3-5',       'label': 'Claude Haiku 3.5'},
-    {'provider': 'Other',     'id': 'google/gemini-2.5-pro',            'label': 'Gemini 2.5 Pro'},
-    {'provider': 'Other',     'id': 'deepseek/deepseek-chat-v3-0324',   'label': 'DeepSeek V3'},
-    {'provider': 'Other',     'id': 'meta-llama/llama-4-scout',         'label': 'Llama 4 Scout'},
+    {'provider': 'OpenAI',    'id': 'openai/gpt-5.4-mini',              'label': 'GPT-5.4 Mini',        'tags': 'fast · cheap · everyday'},
+    {'provider': 'OpenAI',    'id': 'openai/gpt-4o',                    'label': 'GPT-4o',              'tags': 'vision · coding · balanced'},
+    {'provider': 'OpenAI',    'id': 'openai/o3',                        'label': 'o3',                  'tags': 'deep reasoning · slow · expensive'},
+    {'provider': 'OpenAI',    'id': 'openai/o4-mini',                   'label': 'o4-mini',             'tags': 'reasoning · fast · cost-efficient'},
+    {'provider': 'Anthropic', 'id': 'anthropic/claude-sonnet-4.6',      'label': 'Claude Sonnet 4.6',   'tags': 'tools · coding · agents · ★ default'},
+    {'provider': 'Anthropic', 'id': 'anthropic/claude-sonnet-4-5',      'label': 'Claude Sonnet 4.5',   'tags': 'tools · coding · balanced'},
+    {'provider': 'Anthropic', 'id': 'anthropic/claude-haiku-3-5',       'label': 'Claude Haiku 3.5',    'tags': 'fast · cheap · simple tasks'},
+    {'provider': 'Other',     'id': 'google/gemini-2.5-pro',            'label': 'Gemini 2.5 Pro',      'tags': 'long context · multimodal · research'},
+    {'provider': 'Other',     'id': 'deepseek/deepseek-chat-v3-0324',   'label': 'DeepSeek V3',         'tags': 'coding · cost-efficient'},
+    {'provider': 'Other',     'id': 'meta-llama/llama-4-scout',         'label': 'Llama 4 Scout',       'tags': 'open-source · multimodal'},
 ]
 
 # Provider display names for known Hermes provider IDs
@@ -315,53 +315,53 @@ _PROVIDER_DISPLAY = {
 # Well-known models per provider (used to populate dropdown for direct API providers)
 _PROVIDER_MODELS = {
     'anthropic': [
-        {'id': 'claude-opus-4.6',    'label': 'Claude Opus 4.6'},
-        {'id': 'claude-sonnet-4.6',  'label': 'Claude Sonnet 4.6'},
-        {'id': 'claude-sonnet-4-5',  'label': 'Claude Sonnet 4.5'},
-        {'id': 'claude-haiku-3-5',   'label': 'Claude Haiku 3.5'},
+        {'id': 'claude-opus-4.6',   'label': 'Claude Opus 4.6',   'tags': 'most capable · research · complex reasoning'},
+        {'id': 'claude-sonnet-4-6', 'label': 'Claude Sonnet 4.6', 'tags': 'tools · coding · agents · ★ default'},
+        {'id': 'claude-sonnet-4-5', 'label': 'Claude Sonnet 4.5', 'tags': 'tools · coding · balanced'},
+        {'id': 'claude-haiku-3-5',  'label': 'Claude Haiku 3.5',  'tags': 'fast · cheap · simple tasks'},
     ],
     'openai': [
-        {'id': 'gpt-5.4-mini', 'label': 'GPT-5.4 Mini'},
-        {'id': 'gpt-4o',       'label': 'GPT-4o'},
-        {'id': 'o3',           'label': 'o3'},
-        {'id': 'o4-mini',      'label': 'o4-mini'},
+        {'id': 'gpt-5.4-mini', 'label': 'GPT-5.4 Mini', 'tags': 'fast · cheap · everyday'},
+        {'id': 'gpt-4o',       'label': 'GPT-4o',        'tags': 'vision · coding · balanced'},
+        {'id': 'o3',           'label': 'o3',             'tags': 'deep reasoning · slow · expensive'},
+        {'id': 'o4-mini',      'label': 'o4-mini',        'tags': 'reasoning · fast · cost-efficient'},
     ],
     'openai-codex': [
-        {'id': 'codex-mini-latest', 'label': 'Codex Mini'},
+        {'id': 'codex-mini-latest', 'label': 'Codex Mini', 'tags': 'agentic coding · terminal'},
     ],
     'google': [
-        {'id': 'gemini-2.5-pro', 'label': 'Gemini 2.5 Pro'},
+        {'id': 'gemini-2.5-pro', 'label': 'Gemini 2.5 Pro', 'tags': 'long context · multimodal · research'},
     ],
     'deepseek': [
-        {'id': 'deepseek-chat-v3-0324', 'label': 'DeepSeek V3'},
-        {'id': 'deepseek-reasoner',     'label': 'DeepSeek Reasoner'},
+        {'id': 'deepseek-chat-v3-0324', 'label': 'DeepSeek V3',       'tags': 'coding · cost-efficient'},
+        {'id': 'deepseek-reasoner',     'label': 'DeepSeek Reasoner',  'tags': 'chain-of-thought · math · science'},
     ],
     'nous': [
-        {'id': 'claude-opus-4.6',    'label': 'Claude Opus 4.6 (via Nous)'},
-        {'id': 'claude-sonnet-4.6',  'label': 'Claude Sonnet 4.6 (via Nous)'},
-        {'id': 'gpt-5.4-mini',      'label': 'GPT-5.4 Mini (via Nous)'},
-        {'id': 'gemini-2.5-pro',    'label': 'Gemini 2.5 Pro (via Nous)'},
+        {'id': 'claude-opus-4.6',   'label': 'Claude Opus 4.6 (via Nous)',   'tags': 'most capable · research'},
+        {'id': 'claude-sonnet-4.6', 'label': 'Claude Sonnet 4.6 (via Nous)', 'tags': 'tools · coding · agents'},
+        {'id': 'gpt-5.4-mini',      'label': 'GPT-5.4 Mini (via Nous)',      'tags': 'fast · cheap · everyday'},
+        {'id': 'gemini-2.5-pro',    'label': 'Gemini 2.5 Pro (via Nous)',    'tags': 'long context · multimodal'},
     ],
     'zai': [
-        {'id': 'glm-5.1',            'label': 'GLM-5.1'},
-        {'id': 'glm-5',              'label': 'GLM-5'},
-        {'id': 'glm-5-turbo',        'label': 'GLM-5 Turbo'},
-        {'id': 'glm-4.7',            'label': 'GLM-4.7'},
-        {'id': 'glm-4.5',            'label': 'GLM-4.5'},
-        {'id': 'glm-4.5-flash',      'label': 'GLM-4.5 Flash'},
+        {'id': 'glm-5.1',       'label': 'GLM-5.1',       'tags': 'latest · most capable'},
+        {'id': 'glm-5',         'label': 'GLM-5',          'tags': 'capable · balanced'},
+        {'id': 'glm-5-turbo',   'label': 'GLM-5 Turbo',   'tags': 'fast · efficient'},
+        {'id': 'glm-4.7',       'label': 'GLM-4.7',        'tags': 'stable · general purpose'},
+        {'id': 'glm-4.5',       'label': 'GLM-4.5',        'tags': 'general purpose'},
+        {'id': 'glm-4.5-flash', 'label': 'GLM-4.5 Flash', 'tags': 'fast · lightweight'},
     ],
     'kimi-coding': [
-        {'id': 'moonshot-v1-8k',     'label': 'Moonshot v1 8k'},
-        {'id': 'moonshot-v1-32k',    'label': 'Moonshot v1 32k'},
-        {'id': 'moonshot-v1-128k',   'label': 'Moonshot v1 128k'},
-        {'id': 'kimi-latest',        'label': 'Kimi Latest'},
+        {'id': 'moonshot-v1-8k',   'label': 'Moonshot v1 8k',   'tags': '8k context · fast'},
+        {'id': 'moonshot-v1-32k',  'label': 'Moonshot v1 32k',  'tags': '32k context · balanced'},
+        {'id': 'moonshot-v1-128k', 'label': 'Moonshot v1 128k', 'tags': '128k context · long docs'},
+        {'id': 'kimi-latest',      'label': 'Kimi Latest',       'tags': 'latest · multimodal'},
     ],
     'minimax': [
-        {'id': 'MiniMax-M2.7',           'label': 'MiniMax M2.7'},
-        {'id': 'MiniMax-M2.7-highspeed', 'label': 'MiniMax M2.7 Highspeed'},
-        {'id': 'MiniMax-M2.5',           'label': 'MiniMax M2.5'},
-        {'id': 'MiniMax-M2.5-highspeed', 'label': 'MiniMax M2.5 Highspeed'},
-        {'id': 'MiniMax-M2.1',           'label': 'MiniMax M2.1'},
+        {'id': 'MiniMax-M2.7',           'label': 'MiniMax M2.7',           'tags': 'latest · most capable'},
+        {'id': 'MiniMax-M2.7-highspeed', 'label': 'MiniMax M2.7 Highspeed', 'tags': 'latest · fast'},
+        {'id': 'MiniMax-M2.5',           'label': 'MiniMax M2.5',           'tags': 'balanced · capable'},
+        {'id': 'MiniMax-M2.5-highspeed', 'label': 'MiniMax M2.5 Highspeed', 'tags': 'balanced · fast'},
+        {'id': 'MiniMax-M2.1',           'label': 'MiniMax M2.1',           'tags': 'lightweight · efficient'},
     ],
 }
 
@@ -582,7 +582,7 @@ def get_available_models() -> dict:
                 # OpenRouter uses provider/model format -- show the fallback list
                 groups.append({
                     'provider': 'OpenRouter',
-                    'models': [{'id': m['id'], 'label': m['label']} for m in _FALLBACK_MODELS],
+                    'models': [{'id': m['id'], 'label': m['label'], 'tags': m.get('tags', '')} for m in _FALLBACK_MODELS],
                 })
             elif pid in _PROVIDER_MODELS:
                 groups.append({
@@ -607,7 +607,7 @@ def get_available_models() -> dict:
         by_provider = {}
         for m in _FALLBACK_MODELS:
             by_provider.setdefault(m['provider'], []).append(
-                {'id': m['id'], 'label': m['label']}
+                {'id': m['id'], 'label': m['label'], 'tags': m.get('tags', '')}
             )
         for provider_name, models in by_provider.items():
             groups.append({'provider': provider_name, 'models': models})
@@ -615,9 +615,14 @@ def get_available_models() -> dict:
     # Ensure the user's configured default_model always appears in the dropdown.
     # It may be missing if the model isn't in any hardcoded list (e.g. openrouter/free,
     # a custom local model, or any model.default not in _FALLBACK_MODELS).
+    # Normalize IDs for comparison: strip provider prefix, replace hyphens/dots uniformly.
+    def _norm_id(mid):
+        bare = mid.split('/')[-1] if '/' in mid else mid
+        return bare.lower().replace('.', '-')
+
     if default_model:
-        all_ids = {m['id'] for g in groups for m in g.get('models', [])}
-        if default_model not in all_ids:
+        all_norm_ids = {_norm_id(m['id']) for g in groups for m in g.get('models', [])}
+        if _norm_id(default_model) not in all_norm_ids:
             # Determine which group to inject into
             label = default_model.split('/')[-1] if '/' in default_model else default_model
             injected = False
@@ -648,6 +653,7 @@ CHAT_LOCK         = threading.Lock()
 STREAMS: dict     = {}
 STREAMS_LOCK      = threading.Lock()
 CANCEL_FLAGS: dict = {}
+ACTIVE_AGENTS: dict = {}          # stream_id -> AIAgent instance (for interrupt on cancel)
 SERVER_START_TIME = time.time()
 
 # ── Thread-local env context ─────────────────────────────────────────────────

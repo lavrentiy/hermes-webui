@@ -153,7 +153,7 @@ async function send(){
       if(!_approvalSessionId || _approvalSessionId===activeSid) hideApprovalCard();
       if(S.session&&S.session.session_id===activeSid){
         S.activeStreamId=null;
-        const _cb=$('btnCancel');if(_cb)_cb.style.display='none';
+        const _cb=$('btnCancel');if(_cb){_cb.style.display='none';delete _cb.dataset.stopping;_cb.innerHTML='&#9632; Cancel';_cb.style.opacity='';_cb.style.pointerEvents='';}
       }
       if(S.session&&S.session.session_id===activeSid){
         S.session=d.session;S.messages=d.session.messages||[];
@@ -211,7 +211,7 @@ async function send(){
       delete INFLIGHT[activeSid];clearInflight();stopApprovalPolling();
       if(!_approvalSessionId||_approvalSessionId===activeSid) hideApprovalCard();
       if(S.session&&S.session.session_id===activeSid){
-        S.activeStreamId=null;const _cbe=$('btnCancel');if(_cbe)_cbe.style.display='none';
+        S.activeStreamId=null;const _cbe=$('btnCancel');if(_cbe){_cbe.style.display='none';delete _cbe.dataset.stopping;_cbe.innerHTML='&#9632; Cancel';_cbe.style.opacity='';_cbe.style.pointerEvents='';}
         clearLiveToolCards();if(!assistantText)removeThinking();
         try{
           const d=JSON.parse(e.data);
@@ -270,15 +270,28 @@ async function send(){
       source.close();
       delete INFLIGHT[activeSid];clearInflight();stopApprovalPolling();
       if(!_approvalSessionId||_approvalSessionId===activeSid) hideApprovalCard();
+      // Reset cancel button state (undo Stopping… visual)
       if(S.session&&S.session.session_id===activeSid){
-        S.activeStreamId=null;const _cbc=$('btnCancel');if(_cbc)_cbc.style.display='none';
+        S.activeStreamId=null;
+        const _cbc=$('btnCancel');
+        if(_cbc){_cbc.style.display='none';delete _cbc.dataset.stopping;_cbc.innerHTML='&#9632; Cancel';_cbc.style.opacity='';_cbc.style.pointerEvents='';}
       }
+      // Use partial session data from backend if available
+      let cancelData={};
+      try{cancelData=JSON.parse(e.data||'{}');}catch(_){}
       if(S.session&&S.session.session_id===activeSid){
         clearLiveToolCards();if(!assistantText)removeThinking();
-        S.messages.push({role:'assistant',content:'*Task cancelled.*'});renderMessages();
+        if(cancelData.session&&cancelData.session.messages){
+          // Backend saved partial results — use them (includes the [Cancelled] marker)
+          S.messages=cancelData.session.messages;
+          if(cancelData.usage&&typeof syncTopbar==='function') syncTopbar(cancelData.session,cancelData.usage);
+        }else{
+          S.messages.push({role:'assistant',content:'*Task cancelled.*'});
+        }
+        renderMessages();
       }
       renderSessionList();
-      if(!S.session||!INFLIGHT[S.session.session_id]){setBusy(false);setStatus('');}
+      if(!S.session||!INFLIGHT[S.session.session_id]){setBusy(false);setStatus('Cancelled');}
     });
   }
 
@@ -286,7 +299,7 @@ async function send(){
     delete INFLIGHT[activeSid];clearInflight();stopApprovalPolling();
     if(!_approvalSessionId||_approvalSessionId===activeSid) hideApprovalCard();
     if(S.session&&S.session.session_id===activeSid){
-      S.activeStreamId=null;const _cbe=$('btnCancel');if(_cbe)_cbe.style.display='none';
+      S.activeStreamId=null;const _cbe=$('btnCancel');if(_cbe){_cbe.style.display='none';delete _cbe.dataset.stopping;_cbe.innerHTML='&#9632; Cancel';_cbe.style.opacity='';_cbe.style.pointerEvents='';}
       clearLiveToolCards();if(!assistantText)removeThinking();
       S.messages.push({role:'assistant',content:'**Error:** Connection lost'});renderMessages();
     }else{

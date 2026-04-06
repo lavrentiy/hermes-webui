@@ -232,10 +232,11 @@
   .sm-btn{flex:1;padding:6px 0;border-radius:6px;font-size:11px;font-weight:500;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.03em;text-transform:uppercase;}
   .sm-btn:hover{background:rgba(255,255,255,0.09);color:var(--text);border-color:rgba(255,255,255,.15);}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;background:var(--main-bg);}
-  .topbar{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--topbar-bg);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:10;height:99px;box-sizing:border-box;}
+  .topbar{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--topbar-bg);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:10;height:72px;box-sizing:border-box;}
   .topbar-title{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .topbar-meta{font-size:11px;color:var(--muted);margin-top:2px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .topbar-stats{font-size:10px;color:var(--muted);margin-top:3px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"SF Mono","Fira Code",ui-monospace,monospace;letter-spacing:.02em;}
+  .topbar-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+  .topbar-stats{font-size:10px;color:var(--muted);opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"SF Mono","Fira Code",ui-monospace,monospace;letter-spacing:.02em;text-align:right;}
   .topbar-chips{display:flex;gap:6px;align-items:center;flex-shrink:0;}
   .chip{font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-weight:500;}
   .chip.model{color:var(--blue);border-color:rgba(124,185,255,0.35);background:rgba(124,185,255,0.1);}
@@ -431,6 +432,7 @@
     .topbar-title{font-size:14px;}
     .topbar-meta{display:none;}
     .topbar-stats{display:none;}
+    .topbar-right{gap:0;}
     /* Sidebar header: smaller on mobile */
     .sidebar-header{height:64px;padding:10px 12px 0;}
     .topbar-chips{flex-wrap:nowrap;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
